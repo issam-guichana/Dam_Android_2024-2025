@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("kotlin-kapt")
+    id("kotlin-parcelize")
+    kotlin("plugin.serialization") version "2.1.0"
 }
 
 android {
@@ -74,5 +76,9 @@ dependencies {
    //retrofitw
     implementation(libs.retrofit)
     implementation(libs.retrofit2.converter.gson)
+
+    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
+    implementation ("io.coil-kt:coil-compose:2.4.0")
+    implementation ("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.0")
 
 }

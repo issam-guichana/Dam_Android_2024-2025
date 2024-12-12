@@ -47,7 +47,10 @@ fun HomeScreen(navController: NavController) {
                     icon = { Icon(Icons.Outlined.Search, contentDescription = "Search") },
                     label = { Text("Search") },
                     selected = selectedItem == 1,
-                    onClick = { selectedItem = 1 },
+                    onClick = {
+                        selectedItem = 1
+                        navController.navigate(Screen.GeminiChat.route)  // Navigate to GeminiChatScreen
+                    },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = Color(0xFF1E90FF),
                         selectedTextColor = Color(0xFF1E90FF),
