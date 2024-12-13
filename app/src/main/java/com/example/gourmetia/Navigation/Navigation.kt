@@ -13,6 +13,8 @@ import com.example.gourmetia.ForgotPasswordScreen
 import com.example.gourmetia.HomeScreen
 import com.example.gourmetia.OTPVerificationScreen
 import com.example.gourmetia.ProfileScreen
+import com.example.gourmetia.Screens.CommunityScreen
+import com.example.gourmetia.Screens.FavouritesScreen
 import com.example.gourmetia.Screens.Ingredient
 import com.example.gourmetia.Screens.IngredientIdentificationScreen
 import com.example.gourmetia.Screens.RecipeGenerationScreen
@@ -33,6 +35,9 @@ sealed class Screen(val route: String) {
     object GeminiChat : Screen("gemini_chat")
     object RecipeGeneration : Screen("recipe_generation/{ingredientsList}")
     object RecipeResult : Screen("recipe_result/{recipeParams}")
+    object Community : Screen("community")
+    object Favourites : Screen("favourites")
+
     companion object {
         fun fromRoute(route: String?): Screen {
             Log.d("Navigation", "Attempting to navigate to route: $route")
@@ -44,6 +49,8 @@ sealed class Screen(val route: String) {
                 "profile" -> Profile
                 "gemini_chat" -> GeminiChat
                 "recipe_result" -> RecipeResult
+                "community" -> Community
+                "favourites" -> Favourites
                 else -> {
                     Log.d("Navigation", "Unknown route: $route, defaulting to Auth")
                     Auth
@@ -157,6 +164,14 @@ fun NavigationGraph() {
                     mealType = params.mealType
                 )
             }
+        }
+        composable(Screen.Community.route) {
+            Log.d("Navigation", "Composing Community Screen")
+            CommunityScreen(navController)
+        }
+        composable(Screen.Favourites.route) {
+            Log.d("Navigation", "Composing Community Screen")
+            FavouritesScreen(navController)
         }
     }
 }

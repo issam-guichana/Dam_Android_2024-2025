@@ -1,12 +1,14 @@
 package com.example.gourmetia.Screens
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Refresh
@@ -17,26 +19,32 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.gourmetia.R
+import com.example.gourmetia.ViewModels.AuthViewModel
 import com.google.ai.client.generativeai.GenerativeModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
+import java.util.UUID
 
 @Serializable
 data class RecipeDetails(
+    val id: String? = null, // Add this line
     val name: String = "",
     val ingredients: List<Ingredient> = emptyList(),
     val instructions: List<String> = emptyList(),
     val cookingTime: String = "",
     val servings: Int = 2,
-    val nutrients: Map<String, String> = emptyMap()
+    val nutrients: Map<String, String> = emptyMap(),
+    val imageUrl: String = "" // Add this for image representation
 )
 
 @Composable
@@ -201,11 +209,13 @@ fun RecipeResultScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     NavigationButtons(
                         navController = navController,
+                        recipeDetails = recipe!!, // Pass the generated recipe
                         ingredients = ingredients,
                         numberOfPersons = numberOfPersons,
                         selectedCuisine = selectedCuisine,
                         dietaryRestrictions = dietaryRestrictions,
-                        mealType = mealType
+                        mealType = mealType,
+                        authViewModel = viewModel() // Assuming you're using a ViewModel
                     )
                 }
             }
@@ -328,12 +338,15 @@ fun parseRecipeResponse(responseText: String): RecipeDetails {
 @Composable
 fun NavigationButtons(
     navController: NavController,
+    recipeDetails: RecipeDetails, // Add this parameter
     ingredients: List<Ingredient>,
     numberOfPersons: String,
     selectedCuisine: String,
     dietaryRestrictions: String,
-    mealType: String
+    mealType: String,
+    authViewModel: AuthViewModel // Add AuthViewModel to access user context
 ) {
+    val context = LocalContext.current
     // Define button configurations
     val navigationButtons = listOf(
         NavigationButtonConfig(
@@ -357,18 +370,43 @@ fun NavigationButtons(
             }
         ),
         NavigationButtonConfig(
-            icon = Icons.Default.Save,
-            text = "Save Recipe",
+            icon = Icons.Default.FavoriteBorder,
+            text = "Add to Favorites",
             onClick = {
-                // Implement recipe saving logic
-                // This could open a dialog or navigate to a save recipe screen
-                // For now, just a placeholder
-                navController.navigate("save_recipe")
+                val userId = authViewModel.getUserId(context)
+
+                if (userId != null) {
+                    // Convert RecipeDetails to FavouriteRecipe
+                    val favouriteRecipe = FavouriteRecipe(
+                        id = recipeDetails.id ?: UUID.randomUUID().toString(),
+                        title = recipeDetails.name,
+                        imageUrl = recipeDetails.imageUrl, // Ensure this is populated
+                        cookTime = recipeDetails.cookingTime,
+                        difficulty = determineDifficulty(recipeDetails)
+                    )
+
+                    // Call ViewModel method to toggle bookmark
+                    authViewModel.toggleBookmark(
+                        context = context,
+                        recipeId = favouriteRecipe.id,
+                        recipe = favouriteRecipe,
+                        onSuccess = {
+                            // Show success message or update UI
+                            Toast.makeText(context, "Recipe added to favorites!", Toast.LENGTH_SHORT).show()
+                        },
+                        onError = { errorMessage ->
+                            Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                } else {
+                    // Handle case where user is not logged in
+                    Toast.makeText(context, "Please log in to save favorites", Toast.LENGTH_SHORT).show()
+                }
             }
         ),
         NavigationButtonConfig(
             icon = Icons.Default.List,
-            text = "Recipe List",
+            text = "Recipes List",
             onClick = {
                 // Navigate to saved recipes list
                 navController.navigate("recipe_list")
@@ -398,7 +436,7 @@ fun NavigationButtons(
 data class NavigationButtonConfig(
     val icon: ImageVector,
     val text: String,
-    val onClick: () -> Unit
+    val onClick:  () -> Unit
 )
 
 @Composable
@@ -429,6 +467,13 @@ fun NavigationButton(
             style = MaterialTheme.typography.labelSmall,
             color = Color(0xFF2ECC71)
         )
+    }
+}
+fun determineDifficulty(recipeDetails: RecipeDetails): String {
+    return when {
+        recipeDetails.instructions.size <= 3 -> "Easy"
+        recipeDetails.instructions.size <= 6 -> "Medium"
+        else -> "Hard"
     }
 }
 

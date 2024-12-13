@@ -1,5 +1,6 @@
 package com.example.gourmetia.remote
 
+import com.example.gourmetia.Screens.FavouriteRecipe
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -8,9 +9,11 @@ import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface UserAPI {
-    @POST("auth/login")
+//    @POST("auth/login")
+    @POST("auth/signin")
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
     @POST("auth/signup")
@@ -33,6 +36,13 @@ interface UserAPI {
 
     @GET("user/{userId}")
     suspend fun getUserById(@Path("userId") userId: String): Response<GetUserResponse>
+
+    @POST("recipes/{userId}/toggle-bookmark")
+    suspend fun toggleBookmark(
+        @Path("userId") userId: String,
+        @Query("recipeId") recipeId: String,
+        @Body recipe: FavouriteRecipe
+    ): Response<Any>
 
 }
 

@@ -1,6 +1,8 @@
 package com.example.gourmetia
 
 import android.util.Log
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
@@ -12,8 +14,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.gourmetia.Navigation.Screen
 
@@ -44,12 +46,12 @@ fun HomeScreen(navController: NavController) {
                     )
                 )
                 NavigationBarItem(
-                    icon = { Icon(Icons.Outlined.Search, contentDescription = "Search") },
-                    label = { Text("Search") },
+                    icon = { Icon(Icons.Outlined.CameraEnhance, contentDescription = "AI") },
+                    label = { Text("AI") },
                     selected = selectedItem == 1,
                     onClick = {
                         selectedItem = 1
-                        navController.navigate(Screen.GeminiChat.route)  // Navigate to GeminiChatScreen
+                        navController.navigate(Screen.GeminiChat.route)
                     },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = Color(0xFF1E90FF),
@@ -63,7 +65,10 @@ fun HomeScreen(navController: NavController) {
                     icon = { Icon(Icons.Outlined.FavoriteBorder, contentDescription = "Favorites") },
                     label = { Text("Favorites") },
                     selected = selectedItem == 2,
-                    onClick = { selectedItem = 2 },
+                    onClick = {
+                        selectedItem = 3
+                        navController.navigate(Screen.Favourites.route)
+                    },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = Color(0xFF1E90FF),
                         selectedTextColor = Color(0xFF1E90FF),
@@ -73,10 +78,13 @@ fun HomeScreen(navController: NavController) {
                     )
                 )
                 NavigationBarItem(
-                    icon = { Icon(Icons.Outlined.Settings, contentDescription = "Settings") },
-                    label = { Text("Settings") },
+                    icon = { Icon(Icons.Outlined.Forum, contentDescription = "community") },
+                    label = { Text("Community") },
                     selected = selectedItem == 3,
-                    onClick = { selectedItem = 3 },
+                    onClick = {
+                        selectedItem = 3
+                        navController.navigate(Screen.Community.route)
+                    },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = Color(0xFF1E90FF),
                         selectedTextColor = Color(0xFF1E90FF),
@@ -104,20 +112,29 @@ fun HomeScreen(navController: NavController) {
             }
         }
     ) { paddingValues ->
-        Column(
+        // WebView to display recipe news
+        AndroidView(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = "Home",
-                textAlign = TextAlign.Center
-            )
-        }
+            factory = { context ->
+                WebView(context).apply {
+                    webViewClient = WebViewClient()
+                    loadUrl("https://www.foodnetwork.com/recipes")
+                }
+            }
+        )
     }
 }
+fun WebView.configureWebView() {
+    settings.apply {
+        javaScriptEnabled = true
+        domStorageEnabled = true
+        loadWithOverviewMode = true
+        useWideViewPort = true
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {

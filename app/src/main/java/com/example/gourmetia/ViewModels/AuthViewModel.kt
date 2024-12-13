@@ -2,12 +2,14 @@ package com.example.gourmetia.ViewModels
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import retrofit2.Response
 import androidx.compose.runtime.mutableStateOf
+import com.example.gourmetia.Screens.FavouriteRecipe
 import com.example.gourmetia.remote.DeleteUserResponse
 import com.example.gourmetia.remote.GenerateEmailRequest
 import com.example.gourmetia.remote.GenerateEmailResponse
@@ -391,6 +393,52 @@ class AuthViewModel : ViewModel() {
             putString("user_name", userData.name)
             putString("user_email", userData.email)
             apply()
+        }
+    }
+
+    fun toggleBookmark(
+        context: Context,
+        recipeId: String,
+        recipe: FavouriteRecipe,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            isLoading.value = true
+            Log.d("toggleBookmark", "Function started")
+            try {
+                val userId = getUserId(context)
+                Log.d("toggleBookmark", "UserId retrieved: $userId")
+
+                if (userId == null) {
+                    Log.e("toggleBookmark", "User not logged in")
+                    onError("User not logged in")
+                    return@launch
+                }
+
+                Log.d("toggleBookmark", "Calling API with recipeId: $recipeId and recipe: $recipe")
+                val response = RetrofitInstance.api.toggleBookmark(
+                    userId = userId,
+                    recipeId = recipeId,
+                    recipe = recipe
+                )
+
+                if (response.isSuccessful) {
+                    Log.d("toggleBookmark", "API call successful")
+                    onSuccess()
+                } else {
+                    val errorMessage = "Failed to bookmark recipe: ${response.errorBody()?.string()}"
+                    Log.e("toggleBookmark", errorMessage)
+                    onError(errorMessage)
+                }
+            } catch (e: Exception) {
+                val errorMessage = "Error: ${e.message}"
+                Log.e("toggleBookmark", errorMessage, e)
+                onError(errorMessage)
+            } finally {
+                isLoading.value = false
+                Log.d("toggleBookmark", "Loading state set to false")
+            }
         }
     }
 

@@ -39,6 +39,8 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import android.os.Parcelable
 import android.util.Log
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -52,6 +54,7 @@ data class Ingredient(
     val quantity: String = "Not specified"
 ) : Parcelable
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IngredientIdentificationScreen(navController: NavController) {
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
@@ -60,6 +63,7 @@ fun IngredientIdentificationScreen(navController: NavController) {
     var manualIngredientText by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -152,6 +156,23 @@ fun IngredientIdentificationScreen(navController: NavController) {
 
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Ingredient Identifier") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFFF0F4F8),
+                    navigationIconContentColor = Color.Black
+                )
+            )
+        },
         containerColor = Color(0xFFF0F4F8)
     ) { innerPadding ->
         Column(
@@ -239,8 +260,7 @@ fun IngredientIdentificationScreen(navController: NavController) {
             // Analyze Button
             Button(
                 onClick = {
-                    // Launch coroutine for analysis
-                    kotlinx.coroutines.runBlocking {
+                    coroutineScope.launch(Dispatchers.IO) {
                         isLoading = true
                         analysisResult = analyzeIngredients(
                             imageUri = selectedImageUri,
