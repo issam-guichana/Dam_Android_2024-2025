@@ -1,18 +1,14 @@
 package com.example.gourmetia.remote
 
-import com.example.gourmetia.Screens.FavouriteRecipe
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
-import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
-import retrofit2.http.Query
 
 interface UserAPI {
-//    @POST("auth/login")
     @POST("auth/signin")
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
@@ -37,13 +33,11 @@ interface UserAPI {
     @GET("user/{userId}")
     suspend fun getUserById(@Path("userId") userId: String): Response<GetUserResponse>
 
-    @POST("recipes/{userId}/toggle-bookmark")
-    suspend fun toggleBookmark(
-        @Path("userId") userId: String,
-        @Query("recipeId") recipeId: String,
-        @Body recipe: FavouriteRecipe
-    ): Response<Any>
+    @POST("community/create")
+    suspend fun createPost(@Body request: CreatePostRequest): Response<CreatePostResponse>
 
+    @GET("community")
+    suspend fun getCommunityPosts(): Response<List<CommunityPostResponse>>
 }
 
 data class LoginRequest(val email: String, val password: String)
@@ -103,4 +97,24 @@ data class UserData(
     val _id: String,
     val name: String,
     val email: String,
+)
+
+data class CreatePostRequest(
+    val content: String,
+    val authorId: String
+)
+
+data class CreatePostResponse(
+    val success: Boolean,
+    val message: String
+)
+
+data class CommunityPostResponse(
+    val _id: String,
+    val content: String,
+    val author: String,
+    val image: String? = null,
+    val likes: List<String> = emptyList(), // Changed from Int to List<String>
+    val dislikes: List<String> = emptyList(), // Changed from Int to List<String>
+    val createdAt: String
 )

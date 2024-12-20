@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,8 +30,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.gourmetia.R
 import com.example.gourmetia.ViewModels.AuthViewModel
+import com.example.gourmetia.remote.CreatePostRequest
+import com.example.gourmetia.remote.RetrofitInstance
+import com.example.gourmetia.remote.SharedPrefsUtils
 import com.google.ai.client.generativeai.GenerativeModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import java.util.UUID
@@ -338,22 +343,83 @@ fun parseRecipeResponse(responseText: String): RecipeDetails {
 @Composable
 fun NavigationButtons(
     navController: NavController,
-    recipeDetails: RecipeDetails, // Add this parameter
+    recipeDetails: RecipeDetails,
     ingredients: List<Ingredient>,
     numberOfPersons: String,
     selectedCuisine: String,
     dietaryRestrictions: String,
     mealType: String,
-    authViewModel: AuthViewModel // Add AuthViewModel to access user context
+    authViewModel: AuthViewModel
 ) {
     val context = LocalContext.current
-    // Define button configurations
+    val scope = rememberCoroutineScope()
+    var isSharing by remember { mutableStateOf(false) }
+
+    fun formatRecipeContent(): String {
+        return buildString {
+            appendLine("🍳 ${recipeDetails.name}")
+            appendLine("\n👥 Serves: ${recipeDetails.servings}")
+            appendLine("⏲️ Cooking Time: ${recipeDetails.cookingTime}")
+
+            appendLine("\n📝 Ingredients:")
+            recipeDetails.ingredients.forEach { ingredient ->
+                appendLine("• ${ingredient.name}: ${ingredient.quantity}")
+            }
+
+            appendLine("\n📋 Instructions:")
+            recipeDetails.instructions.forEachIndexed { index, instruction ->
+                appendLine("${index + 1}. $instruction")
+            }
+
+            if (recipeDetails.nutrients.isNotEmpty()) {
+                appendLine("\n📊 Nutritional Information:")
+                recipeDetails.nutrients.forEach { (nutrient, value) ->
+                    appendLine("$nutrient: $value")
+                }
+            }
+
+            appendLine("\n🍽️ Cuisine: $selectedCuisine")
+            appendLine("🥗 Meal Type: $mealType")
+            if (dietaryRestrictions.isNotEmpty()) {
+                appendLine("ℹ️ Dietary Restrictions: $dietaryRestrictions")
+            }
+        }
+    }
+
+    // Function to share recipe
+    fun shareRecipe() {
+        scope.launch {
+            try {
+                isSharing = true
+                val userId = authViewModel.getUserId(context) ?: throw Exception("User not logged in")
+                val content = formatRecipeContent()
+
+                val response = RetrofitInstance.api.createPost(
+                    CreatePostRequest(
+                        content = content,
+                        authorId = userId
+                    )
+                )
+
+                if (response.isSuccessful) {
+                    Toast.makeText(context, "Recipe shared successfully!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "Failed to share recipe", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Log.e("RecipeSharing", "Error sharing recipe", e)
+                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            } finally {
+                isSharing = false
+            }
+        }
+    }
+
     val navigationButtons = listOf(
         NavigationButtonConfig(
             icon = Icons.Default.Refresh,
             text = "Another Recipe",
             onClick = {
-                // Navigate back to ingredient selection to generate a new recipe
                 navController.navigate("ingredient_selection") {
                     popUpTo("recipe_result") { inclusive = true }
                 }
@@ -363,7 +429,6 @@ fun NavigationButtons(
             icon = Icons.Default.Home,
             text = "Home",
             onClick = {
-                // Navigate to home screen
                 navController.navigate("home") {
                     popUpTo("recipe_result") { inclusive = true }
                 }
@@ -373,44 +438,22 @@ fun NavigationButtons(
             icon = Icons.Default.FavoriteBorder,
             text = "Add to Favorites",
             onClick = {
-                val userId = authViewModel.getUserId(context)
+                val recipeWithId = recipeDetails.copy(
+                    id = recipeDetails.id ?: UUID.randomUUID().toString()
+                )
 
-                if (userId != null) {
-                    // Convert RecipeDetails to FavouriteRecipe
-                    val favouriteRecipe = FavouriteRecipe(
-                        id = recipeDetails.id ?: UUID.randomUUID().toString(),
-                        title = recipeDetails.name,
-                        imageUrl = recipeDetails.imageUrl, // Ensure this is populated
-                        cookTime = recipeDetails.cookingTime,
-                        difficulty = determineDifficulty(recipeDetails)
-                    )
-
-                    // Call ViewModel method to toggle bookmark
-                    authViewModel.toggleBookmark(
-                        context = context,
-                        recipeId = favouriteRecipe.id,
-                        recipe = favouriteRecipe,
-                        onSuccess = {
-                            // Show success message or update UI
-                            Toast.makeText(context, "Recipe added to favorites!", Toast.LENGTH_SHORT).show()
-                        },
-                        onError = { errorMessage ->
-                            Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
-                        }
-                    )
-                } else {
-                    // Handle case where user is not logged in
-                    Toast.makeText(context, "Please log in to save favorites", Toast.LENGTH_SHORT).show()
+                try {
+                    SharedPrefsUtils.saveRecipe(context, recipeWithId)
+                    Toast.makeText(context, "Recipe saved to favorites!", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Failed to save recipe", Toast.LENGTH_SHORT).show()
                 }
             }
         ),
         NavigationButtonConfig(
-            icon = Icons.Default.List,
-            text = "Recipes List",
-            onClick = {
-                // Navigate to saved recipes list
-                navController.navigate("recipe_list")
-            }
+            icon = Icons.Default.Share,
+            text = "Share",
+            onClick = { shareRecipe() }
         )
     )
 
@@ -426,13 +469,12 @@ fun NavigationButtons(
                 NavigationButton(
                     icon = buttonConfig.icon,
                     text = buttonConfig.text,
-                    onClick = buttonConfig.onClick
+                    onClick = buttonConfig.onClick,
                 )
             }
         }
     }
 }
-
 data class NavigationButtonConfig(
     val icon: ImageVector,
     val text: String,
@@ -486,13 +528,4 @@ fun RecipeResultScreenPreview() {
         Ingredient("Tomatoes", "3 pieces"),
         Ingredient("Onions", "2 pieces")
     )
-    // Note: In a preview, you'd mock a NavController or use a dummy implementation
-    // RecipeResultScreen(
-    //     navController = mockNavController,
-    //     ingredients = sampleIngredients,
-    //     numberOfPersons = "2",
-    //     selectedCuisine = "Italian",
-    //     dietaryRestrictions = "None",
-    //     mealType = "Dinner"
-    // )
 }

@@ -9,7 +9,7 @@ import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import retrofit2.Response
 import androidx.compose.runtime.mutableStateOf
-import com.example.gourmetia.Screens.FavouriteRecipe
+import com.example.gourmetia.remote.CommunityPostResponse
 import com.example.gourmetia.remote.DeleteUserResponse
 import com.example.gourmetia.remote.GenerateEmailRequest
 import com.example.gourmetia.remote.GenerateEmailResponse
@@ -34,6 +34,8 @@ class AuthViewModel : ViewModel() {
     var deleteAccountResponse = mutableStateOf<String?>(null)
     var updateProfileResponse = mutableStateOf<String?>(null)
     var userDataResponse = mutableStateOf<GetUserResponse?>(null)
+    var communityPostsResponse = mutableStateOf<List<CommunityPostResponse>?>(null)
+    var communityError = mutableStateOf<String?>(null)
 
     companion object {
         private const val PREF_ACCESS_TOKEN = "access_token"
@@ -396,51 +398,57 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    fun toggleBookmark(
+    fun getCommunityPosts(
         context: Context,
-        recipeId: String,
-        recipe: FavouriteRecipe,
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
         viewModelScope.launch {
             isLoading.value = true
-            Log.d("toggleBookmark", "Function started")
             try {
-                val userId = getUserId(context)
-                Log.d("toggleBookmark", "UserId retrieved: $userId")
-
-                if (userId == null) {
-                    Log.e("toggleBookmark", "User not logged in")
-                    onError("User not logged in")
-                    return@launch
-                }
-
-                Log.d("toggleBookmark", "Calling API with recipeId: $recipeId and recipe: $recipe")
-                val response = RetrofitInstance.api.toggleBookmark(
-                    userId = userId,
-                    recipeId = recipeId,
-                    recipe = recipe
-                )
-
+                val response = RetrofitInstance.api.getCommunityPosts()
                 if (response.isSuccessful) {
-                    Log.d("toggleBookmark", "API call successful")
+                    communityPostsResponse.value = response.body()
                     onSuccess()
                 } else {
-                    val errorMessage = "Failed to bookmark recipe: ${response.errorBody()?.string()}"
-                    Log.e("toggleBookmark", errorMessage)
+                    val errorMessage = "Failed to fetch posts: ${response.errorBody()?.string()}"
+                    communityError.value = errorMessage
                     onError(errorMessage)
                 }
             } catch (e: Exception) {
                 val errorMessage = "Error: ${e.message}"
-                Log.e("toggleBookmark", errorMessage, e)
+                communityError.value = errorMessage
                 onError(errorMessage)
+                Log.e("getCommunityPosts", errorMessage, e)
             } finally {
                 isLoading.value = false
-                Log.d("toggleBookmark", "Loading state set to false")
             }
         }
     }
+
+    // Optional: Add function to get author details if needed
+    fun getAuthorDetails(
+        authorId: String,
+        onSuccess: (UserData) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitInstance.api.getUserById(authorId)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    response.body()?.user?.let { userData ->
+                        onSuccess(userData)
+                    }
+                } else {
+                    onError("Failed to fetch author details")
+                }
+            } catch (e: Exception) {
+                onError(e.message ?: "Error fetching author details")
+            }
+        }
+    }
+
+
 
 
     // Update clearResponses to include forgotPasswordResponse

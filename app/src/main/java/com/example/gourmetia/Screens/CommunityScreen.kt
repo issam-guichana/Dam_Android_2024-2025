@@ -1,5 +1,6 @@
 package com.example.gourmetia.Screens
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,15 +25,58 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.gourmetia.ViewModels.AuthViewModel
+import com.example.gourmetia.remote.UserData
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CommunityScreen(navController: NavController) {
+fun CommunityScreen(
+    navController: NavController,
+    viewModel: AuthViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+) {
+    val context = LocalContext.current
+    val posts = viewModel.communityPostsResponse.value
+    val isLoading = viewModel.isLoading.value
+    val error = viewModel.communityError.value
+
+    // Track author details for each post
+    val authorDetails = remember { mutableStateMapOf<String, UserData>() }
+
+    LaunchedEffect(key1 = true) {
+        if (viewModel.getAccessToken(context) == null) {
+            navController.navigate("login") {
+                popUpTo(navController.graph.startDestinationId)
+                launchSingleTop = true
+            }
+            return@LaunchedEffect
+        }
+
+        viewModel.getCommunityPosts(
+            context = context,
+            onSuccess = {
+                // Fetch author details for each post
+                posts?.forEach { post ->
+                    viewModel.getAuthorDetails(
+                        authorId = post.author,
+                        onSuccess = { userData ->
+                            authorDetails[post.author] = userData
+                        },
+                        onError = { /* Handle error */ }
+                    )
+                }
+            },
+            onError = { errorMessage ->
+                Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -60,14 +104,76 @@ fun CommunityScreen(navController: NavController) {
             )
         }
     ) { paddingValues ->
-        LazyColumn(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .background(Color(0xFFF1F3F5))
         ) {
-            items(CommunityPostRepository.dummyPosts) { post ->
-                CommunityPostCard(post)
+            when {
+                isLoading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                error != null -> {
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = error,
+                            color = Color.Red,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = {
+                                viewModel.getCommunityPosts(
+                                    context = context,
+                                    onSuccess = { },
+                                    onError = { errorMessage ->
+                                        Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+                                    }
+                                )
+                            }
+                        ) {
+                            Text("Retry")
+                        }
+                    }
+                }
+                posts?.isEmpty() == true -> {
+                    Text(
+                        text = "No posts available",
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(16.dp)
+                    )
+                }
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(posts ?: emptyList()) { post ->
+                            val author = authorDetails[post.author]
+                            CommunityPostCard(
+                                CommunityPost(
+                                    id = post._id,
+                                    userName = author?.name ?: "Issam Guichana",
+                                    userProfileImage = "https://via.placeholder.com/48",
+                                    recipeImage = post.image ?: "https://via.placeholder.com/400",
+                                    recipeTitle = "Recipe generated by ${author?.name ?: "Issam"}",
+                                    description = post.content,
+                                    likes = post.likes.size, // Use size of the likes list
+                                    dislikes = post.dislikes.size // Use size of the dislikes list
+                                )
+                            )
+                        }
+                    }
+                }
             }
         }
     }
