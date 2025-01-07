@@ -6,6 +6,7 @@ import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 
 interface UserAPI {
@@ -27,7 +28,7 @@ interface UserAPI {
     @DELETE("user/{userId}")
     suspend fun deleteUser(@Path("userId") userId: String): Response<DeleteUserResponse>
 
-    @PATCH("user/{userId}")
+    @PUT("user/{userId}")
     suspend fun updateProfile(@Path("userId") userId: String, @Body request: UpdateProfileRequest): Response<UpdateProfileResponse>
 
     @GET("user/{userId}")

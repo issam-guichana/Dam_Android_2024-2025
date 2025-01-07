@@ -36,6 +36,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.gourmetia.R
 import com.example.gourmetia.ViewModels.AuthViewModel
+import com.example.gourmetia.remote.SharedPrefsUtils
 import com.example.gourmetia.remote.UserData
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -221,10 +222,14 @@ fun CommunityScreen(
 
 @Composable
 fun CommunityPostCard(post: CommunityPost) {
+    val context = LocalContext.current
     var likes by remember { mutableStateOf(post.likes) }
     var dislikes by remember { mutableStateOf(post.dislikes) }
     var hasLiked by remember { mutableStateOf(false) }
     var hasDisliked by remember { mutableStateOf(false) }
+    var isFavorited by remember {
+        mutableStateOf(SharedPrefsUtils.isRecipeFavorited(context, post.id))
+    }
 
     Card(
         modifier = Modifier
@@ -348,9 +353,23 @@ fun CommunityPostCard(post: CommunityPost) {
                 InteractionButton(
                     icon = Icons.Filled.FavoriteBorder,
                     count = 0,
-                    isSelected = false,
+                    isSelected = isFavorited,
                     selectedColor = Color(0xFFFF597B),
-                    onClick = { /* Favorite action */ }
+                    onClick = {
+                        try {
+                            if (!isFavorited) {
+                                val recipeDetails = parsePostToRecipeDetails(post)
+                                SharedPrefsUtils.saveRecipe(context, recipeDetails)
+                                Toast.makeText(context, "Added to favorites!", Toast.LENGTH_SHORT).show()
+                            } else {
+                                SharedPrefsUtils.removeRecipe(context, post.id)
+                                Toast.makeText(context, "Removed from favorites", Toast.LENGTH_SHORT).show()
+                            }
+                            isFavorited = !isFavorited
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 )
 
                 IconButton(
@@ -400,4 +419,67 @@ fun InteractionButton(
             style = MaterialTheme.typography.bodyMedium
         )
     }
+}
+
+fun parsePostToRecipeDetails(post: CommunityPost): RecipeDetails {
+    // Split the content into sections
+    val content = post.description
+    val sections = content.split("\n\n")
+
+    // Initialize variables
+    var name = ""
+    var servings = 2
+    var cookingTime = ""
+    val ingredients = mutableListOf<Ingredient>()
+    val instructions = mutableListOf<String>()
+    val nutrients = mutableMapOf<String, String>()
+
+    // Parse each section
+    var currentSection = ""
+    sections.forEach { section ->
+        when {
+            section.startsWith("🍳") -> {
+                name = section.substringAfter("🍳 ").trim()
+            }
+            section.contains("👥 Serves:") -> {
+                servings = section.substringAfter("👥 Serves:").trim().split(" ")[0].toIntOrNull() ?: 2
+                cookingTime = section.substringAfter("⏲️ Cooking Time:").trim()
+            }
+            section.startsWith("📝 Ingredients:") -> {
+                section.lines().drop(1).forEach { line ->
+                    if (line.startsWith("•")) {
+                        val parts = line.substringAfter("• ").split(": ")
+                        if (parts.size == 2) {
+                            ingredients.add(Ingredient(parts[0].trim(), parts[1].trim()))
+                        }
+                    }
+                }
+            }
+            section.startsWith("📋 Instructions:") -> {
+                section.lines().drop(1).forEach { line ->
+                    if (line.matches(Regex("\\d+\\..*"))) {
+                        instructions.add(line.substringAfter(". ").trim())
+                    }
+                }
+            }
+            section.startsWith("📊 Nutritional Information:") -> {
+                section.lines().drop(1).forEach { line ->
+                    val parts = line.split(": ")
+                    if (parts.size == 2) {
+                        nutrients[parts[0].trim()] = parts[1].trim()
+                    }
+                }
+            }
+        }
+    }
+
+    return RecipeDetails(
+        id = post.id,
+        name = name,
+        ingredients = ingredients,
+        instructions = instructions,
+        cookingTime = cookingTime,
+        servings = servings,
+        nutrients = nutrients
+    )
 }

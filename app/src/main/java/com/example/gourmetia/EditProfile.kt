@@ -1,9 +1,7 @@
 package com.example.gourmetia
 
 import android.content.Context
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,9 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -45,7 +41,7 @@ fun EditProfileScreen(
         name = prefs.getString("user_name", "") ?: ""
         email = prefs.getString("user_email", "") ?: ""
         phone = prefs.getString("user_phone", "") ?: "+216 25 786 329"
-        // Fetch updated user data from server
+
         authViewModel.getUserById(
             context = context,
             onSuccess = { response ->
@@ -65,7 +61,7 @@ fun EditProfileScreen(
                     Text(
                         "Edit Profile",
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF2C3E50)
+                        color = Color(0xFFFF597B)
                     )
                 },
                 navigationIcon = {
@@ -73,7 +69,7 @@ fun EditProfileScreen(
                         Icon(
                             Icons.Outlined.ArrowBack,
                             contentDescription = "Back",
-                            tint = Color(0xFF2C3E50)
+                            tint = Color(0xFFFF597B)
                         )
                     }
                 },
@@ -97,12 +93,12 @@ fun EditProfileScreen(
                         if (authViewModel.isLoading.value) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(16.dp),
-                                color = Color(0xFFFF5555)
+                                color = Color(0xFFFF597B)
                             )
                         } else {
                             Text(
                                 "Save",
-                                color = Color(0xFFFF5555),
+                                color = Color(0xFFFF597B),
                                 fontWeight = FontWeight.Medium
                             )
                         }
@@ -120,8 +116,8 @@ fun EditProfileScreen(
                 .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(
-                            Color(0xFFFFFBF5),
-                            Color(0xFFF5EDE0)
+                            Color(0xFFF6A8B9),
+                            Color(0xFFFCE0E2)
                         )
                     )
                 )
@@ -130,86 +126,144 @@ fun EditProfileScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(16.dp),
+                    .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Card(
+                Surface(
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(CircleShape),
+                    color = Color.White
+                ) {
+                    Icon(
+                        Icons.Outlined.Person,
+                        contentDescription = "Profile",
+                        modifier = Modifier
+                            .padding(24.dp)
+                            .size(72.dp),
+                        tint = Color(0xFFFF597B)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Name") },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Outlined.Person,
+                            contentDescription = "Name",
+                            tint = Color(0xFFFF597B)
+                        )
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                        .padding(bottom = 16.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = Color(0xFFFF597B),
+                        focusedBorderColor = Color(0xFFFF597B),
+                        unfocusedLabelColor = Color(0xFFFF597B),
+                        focusedLabelColor = Color(0xFFFF597B)
+                    )
+                )
+
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Email") },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Outlined.Email,
+                            contentDescription = "Email",
+                            tint = Color(0xFFFF597B)
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = Color(0xFFFF597B),
+                        focusedBorderColor = Color(0xFFFF597B),
+                        unfocusedLabelColor = Color(0xFFFF597B),
+                        focusedLabelColor = Color(0xFFFF597B)
+                    )
+                )
+
+                OutlinedTextField(
+                    value = phone,
+                    onValueChange = { phone = it },
+                    label = { Text("Phone") },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Outlined.Phone,
+                            contentDescription = "Phone",
+                            tint = Color(0xFFFF597B)
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 24.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = Color(0xFFFF597B),
+                        focusedBorderColor = Color(0xFFFF597B),
+                        unfocusedLabelColor = Color(0xFFFF597B),
+                        focusedLabelColor = Color(0xFFFF597B)
+                    )
+                )
+
+                Button(
+                    onClick = {
+                        authViewModel.updateProfile(
+                            context = context,
+                            name = name,
+                            email = email,
+                            onSuccess = {
+                                navController.navigateUp()
+                            },
+                            onError = { error ->
+                                showError = error
+                            }
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent
+                    ),
+                    enabled = !authViewModel.isLoading.value
                 ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(
+                                        Color(0xFFFF597B),
+                                        Color(0xFFFF8BA0)
+                                    )
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            ),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Surface(
-                            modifier = Modifier
-                                .size(100.dp)
-                                .clip(CircleShape),
-                            color = Color(0xFFE1E8ED)
-                        ) {
-                            Icon(
-                                Icons.Outlined.Person,
-                                contentDescription = "Profile",
-                                modifier = Modifier
-                                    .padding(20.dp)
-                                    .size(60.dp),
-                                tint = Color(0xFFFF5555)
+                        if (authViewModel.isLoading.value) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        } else {
+                            Text(
+                                "Save Changes",
+                                color = Color.White,
+                                fontWeight = FontWeight.Medium
                             )
                         }
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        OutlinedTextField(
-                            value = name,
-                            onValueChange = { name = it },
-                            label = { Text("Name") },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Outlined.Person,
-                                    contentDescription = "Name",
-                                    tint = Color(0xFFFF5555)
-                                )
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp)
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        OutlinedTextField(
-                            value = email,
-                            onValueChange = { email = it },
-                            label = { Text("Email") },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Outlined.Email,
-                                    contentDescription = "Email",
-                                    tint = Color(0xFFFF5555)
-                                )
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp)
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        OutlinedTextField(
-                            value = phone,
-                            onValueChange = { phone = it },
-                            label = { Text("Phone") },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Outlined.Phone,
-                                    contentDescription = "Phone",
-                                    tint = Color(0xFFFF5555)
-                                )
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp)
-                        )
                     }
                 }
             }
