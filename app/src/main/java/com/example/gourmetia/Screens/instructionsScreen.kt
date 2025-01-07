@@ -9,11 +9,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -28,7 +30,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun RecipeGenerationScreen(
     navController: NavController,
@@ -50,203 +52,296 @@ fun RecipeGenerationScreen(
         "Appetizer", "Main Course", "Dessert"
     )
 
-    // Optional: Add a way to set ingredients if they weren't passed initially
     LaunchedEffect(ingredients) {
         Log.d("RecipeGenerationScreen", "Received ingredients: ${ingredients.size}")
         ingredients.forEach {
             Log.d("RecipeGenerationScreen", "Ingredient: ${it.name}, Quantity: ${it.quantity}")
         }
     }
-    Scaffold(
-        containerColor = Color(0xFFF0F4F8)
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Logo and Title
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 24.dp)
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.gourmetia_logo),
-                    contentDescription = "Gourmet AI Logo",
-                    modifier = Modifier.size(50.dp)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                Text(
-                    text = "Recipe Generation",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 24.sp
-                    )
-                )
-            }
 
-            // Ingredients Preview Card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFFFF3E0)
-                )
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Ingredients Detected:",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        modifier = Modifier.padding(bottom = 8.dp)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFFF6A8B9),  // Light pink
+                        Color(0xFFFCE0E2)   // Light pink
                     )
-                    ingredients.forEach { ingredient ->
+                )
+            )
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Recipe Generation", color = Color.White) },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color.White
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color(0xFFFF597B)
+                    )
+                )
+            },
+            containerColor = Color.Transparent
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Logo and Title in a white rounded card
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 24.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.gourmetia_logo),
+                            contentDescription = "Gourmet AI Logo",
+                            modifier = Modifier.size(50.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
                         Text(
-                            text = "• ${ingredient.name}: ${ingredient.quantity}",
-                            style = MaterialTheme.typography.bodyMedium
+                            text = "Recipe Generation",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 24.sp,
+                                color = Color(0xFFFF597B)
+                            )
                         )
                     }
                 }
-            }
 
-            // Number of Persons
-            Text(
-                text = "Number of Persons",
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                listOf("1", "2", "3", "4", "5", "6").forEach { num ->
-                    Button(
-                        onClick = { numberOfPersons = num },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (numberOfPersons == num) Color(0xFF2ECC71) else Color.Gray.copy(alpha = 0.3f)
-                        ),
-                        modifier = Modifier.padding(horizontal = 4.dp)
-                    ) {
-                        Text(num)
+                // Ingredients Preview Card
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Ingredients Detected:",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFFF597B)
+                            ),
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        ingredients.forEach { ingredient ->
+                            Text(
+                                text = "• ${ingredient.name}: ${ingredient.quantity}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            )
+                        }
                     }
                 }
-            }
 
-            // Cuisine Selection
-            Text(
-                text = "Select Cuisine",
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                cuisineOptions.forEach { cuisine ->
-                    Button(
-                        onClick = { selectedCuisine = cuisine },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (selectedCuisine == cuisine) Color(0xFF2ECC71) else Color.Gray.copy(alpha = 0.3f)
-                        ),
-                        modifier = Modifier.padding(4.dp)
+                // Number of Persons Card
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
                     ) {
-                        Text(cuisine)
+                        Text(
+                            text = "Number of Persons",
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                color = Color(0xFFFF597B),
+                                fontWeight = FontWeight.Bold
+                            ),
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            listOf("1", "2", "3", "4", "5", "6").forEach { num ->
+                                Button(
+                                    onClick = { numberOfPersons = num },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (numberOfPersons == num)
+                                            Color(0xFFFF597B) else Color.Gray.copy(alpha = 0.3f)
+                                    ),
+                                    modifier = Modifier.padding(horizontal = 4.dp)
+                                ) {
+                                    Text(num)
+                                }
+                            }
+                        }
                     }
                 }
-            }
 
-            // Meal Type Selection
-            Text(
-                text = "Meal Type",
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                mealTypeOptions.forEach { type ->
-                    Button(
-                        onClick = { mealType = type },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (mealType == type) Color(0xFF2ECC71) else Color.Gray.copy(alpha = 0.3f)
-                        ),
-                        modifier = Modifier.padding(4.dp)
+                // Cuisine Selection Card
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
                     ) {
-                        Text(type)
+                        Text(
+                            text = "Select Cuisine",
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                color = Color(0xFFFF597B),
+                                fontWeight = FontWeight.Bold
+                            ),
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Start
+                        ) {
+                            cuisineOptions.forEach { cuisine ->
+                                Button(
+                                    onClick = { selectedCuisine = cuisine },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (selectedCuisine == cuisine)
+                                            Color(0xFFFF597B) else Color.Gray.copy(alpha = 0.3f)
+                                    ),
+                                    modifier = Modifier.padding(4.dp)
+                                ) {
+                                    Text(cuisine)
+                                }
+                            }
+                        }
                     }
                 }
-            }
 
-            // Dietary Restrictions
-            TextField(
-                value = dietaryRestrictions,
-                onValueChange = { dietaryRestrictions = it },
-                label = { Text("Any Dietary Restrictions?") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp)
-                    .background(
-                        color = Color.White,
-                        shape = RoundedCornerShape(12.dp)
+                // Meal Type Card
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Meal Type",
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                color = Color(0xFFFF597B),
+                                fontWeight = FontWeight.Bold
+                            ),
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Start
+                        ) {
+                            mealTypeOptions.forEach { type ->
+                                Button(
+                                    onClick = { mealType = type },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (mealType == type)
+                                            Color(0xFFFF597B) else Color.Gray.copy(alpha = 0.3f)
+                                    ),
+                                    modifier = Modifier.padding(4.dp)
+                                ) {
+                                    Text(type)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Dietary Restrictions TextField
+                OutlinedTextField(
+                    value = dietaryRestrictions,
+                    onValueChange = { dietaryRestrictions = it },
+                    label = { Text("Any Dietary Restrictions?") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = Color(0xFFFF597B),
+                        focusedBorderColor = Color(0xFFFF597B),
+                        unfocusedLabelColor = Color(0xFFFF597B),
+                        focusedLabelColor = Color(0xFFFF597B)
                     )
-                    .border(
-                        width = 1.5.dp,
-                        color = Color(0xFF2ECC71).copy(alpha = 0.5f),
-                        shape = RoundedCornerShape(12.dp)
+                )
+
+                // Generate Recipe Button
+                Button(
+                    onClick = {
+                        if (ingredients.isNotEmpty() && selectedCuisine.isNotBlank() && mealType.isNotBlank()) {
+                            val recipeParams = RecipeParams(
+                                ingredients = ingredients,
+                                numberOfPersons = numberOfPersons,
+                                cuisine = selectedCuisine,
+                                dietaryRestrictions = dietaryRestrictions,
+                                mealType = mealType
+                            )
+                            val encodedParams = java.net.URLEncoder.encode(
+                                Json.encodeToString(recipeParams),
+                                "UTF-8"
+                            )
+                            navController.navigate("recipe_result/$encodedParams")
+                        } else {
+                            Log.d("RecipeGeneration", "Please fill all required fields")
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent
                     ),
-                colors = TextFieldDefaults.colors(
-                    unfocusedContainerColor = Color.White,
-                    focusedContainerColor = Color.White,
-                    cursorColor = Color(0xFF2ECC71),
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
-                ),
-                shape = RoundedCornerShape(12.dp)
-            )
-
-            // Generate Recipe Button
-            Button(
-                onClick = {
-                    // Validate inputs
-                    if (ingredients.isNotEmpty() && selectedCuisine.isNotBlank() && mealType.isNotBlank()) {
-                        // Encode all parameters to pass to the next screen
-                        val recipeParams = RecipeParams(
-                            ingredients = ingredients,
-                            numberOfPersons = numberOfPersons,
-                            cuisine = selectedCuisine,
-                            dietaryRestrictions = dietaryRestrictions,
-                            mealType = mealType
-                        )
-
-                        // Encode the parameters to JSON
-                        val encodedParams = java.net.URLEncoder.encode(
-                            Json.encodeToString(recipeParams),
-                            "UTF-8"
-                        )
-
-                        // Navigate to the Recipe Result Screen
-                        navController.navigate("recipe_result/$encodedParams")
-                    } else {
-                        // Show an error or prevent navigation
-                        Log.d("RecipeGeneration", "Please fill all required fields")
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(70.dp)
+                        .padding(vertical = 8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(
+                                        Color(0xFFFF597B),
+                                        Color(0xFFFF8BA0)
+                                    )
+                                ),
+                                shape = RoundedCornerShape(8.dp)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Restaurant, contentDescription = "Generate Recipe")
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Generate Recipe")
+                        }
                     }
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF2ECC71)
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp)
-            ) {
-                Icon(Icons.Default.Restaurant, contentDescription = "Generate Recipe")
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Generate Recipe")
+                }
+
+                Spacer(modifier = Modifier.height(100.dp))
             }
         }
     }

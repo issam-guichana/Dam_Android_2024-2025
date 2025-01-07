@@ -4,6 +4,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -37,22 +38,19 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel = Auth
     val isLoading = authViewModel.isLoading.value
     val loginResponse = authViewModel.loginResponse.value
 
+    // Keep existing LaunchedEffect and response handling
     LaunchedEffect(loginResponse) {
         loginResponse?.let {
             Log.d("AuthScreen", "Login Response: $it")
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
             if (it.contains("Success")) {
-                Log.d("AuthScreen", "Attempting navigation to Home")
                 try {
-                    // After successful login, you can get the stored values
                     val accessToken = authViewModel.getAccessToken(context)
                     val userId = authViewModel.getUserId(context)
                     Log.d("AuthScreen", "AccessToken: $accessToken, UserId: $userId")
-
                     navController.navigate("home") {
                         popUpTo("auth") { inclusive = true }
                     }
-                    Log.d("AuthScreen", "Navigation command executed")
                 } catch (e: Exception) {
                     Log.e("AuthScreen", "Navigation failed", e)
                     Toast.makeText(context, "Navigation failed: ${e.message}", Toast.LENGTH_LONG).show()
@@ -61,16 +59,16 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel = Auth
         }
     }
 
-    val gradientColors = listOf(
-        Color(0xFFFFFBF5),  // Warm white
-        Color(0xFFFFD0D0)   // Soft cream
-    )
-
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                brush = Brush.verticalGradient(colors = gradientColors)
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFFF6A8B9),  // Light pink
+                        Color(0xFFFCE0E2)   // Light pink
+                    )
+                )
             )
     ) {
         Column(
@@ -80,139 +78,158 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel = Auth
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.gourmetia_logo),
-                contentDescription = "Gourmetia Logo",
+            // Circular logo container
+            Box(
                 modifier = Modifier
-                    .size(140.dp)
-                    .padding(bottom = 32.dp)
+                    .size(180.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(Color.White)
+                    .padding(0.dp)
+                    .border(
+                        width = 6.dp, // Specify the border width
+                        color = Color.White, // Specify the border color
+                        shape = RoundedCornerShape(50) // Match the shape of the border with the clip shape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.loginphoto),
+                    contentDescription = "Gourmetia Logo",
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+
+
+            Text(
+                text = "Bienvenue",
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFE54D70),
+                modifier = Modifier.padding(vertical = 32.dp)
             )
 
-            Card(
+            // Email TextField
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("Email") },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Email,
+                        contentDescription = null,
+                        tint = Color(0xFFFF597B)
+                    )
+                },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp)),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                    .padding(bottom = 16.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = Color(0xFFFF597B),
+                    focusedBorderColor = Color(0xFFFF597B),
+                    unfocusedLabelColor = Color(0xFFFF597B),
+                    focusedLabelColor = Color(0xFFFF597B)
+                )
+            )
+
+            // Password TextField
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Mot de passe") },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Lock,
+                        contentDescription = null,
+                        tint = Color(0xFFFF597B)
+                    )
+                },
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = Color(0xFFFF597B),
+                    focusedBorderColor = Color(0xFFFF597B),
+                    unfocusedLabelColor = Color(0xFFFF597B),
+                    focusedLabelColor = Color(0xFFFF597B)
+                )
+            )
+
+            TextButton(
+                onClick = { navController.navigate(Screen.ForgotPassword.route) },
+                modifier = Modifier.align(Alignment.End)
             ) {
-                Column(
-                    modifier = Modifier
-                        .padding(horizontal = 24.dp, vertical = 32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Welcome Back",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF2C3E50),
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
+                Text(
+                    "Mot de passe oublié ?",
+                    color = Color(0xFFFF597B),
+                    fontSize = 12.sp
+                )
+            }
 
-                    Text(
-                        text = "Sign in to continue",
-                        fontSize = 14.sp,
-                        color = Color.Gray,
-                        modifier = Modifier.padding(bottom = 24.dp)
-                    )
-
-                    OutlinedTextField(
-                        value = email,
-                        onValueChange = { email = it },
-                        label = { Text("Email") },
-                        leadingIcon = {
-                            Icon(
-                                Icons.Default.Email,
-                                contentDescription = null,
-                                tint = Color(0xFFFF5555)
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 16.dp),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-
-                    OutlinedTextField(
-                        value = password,
-                        onValueChange = { password = it },
-                        label = { Text("Password") },
-                        leadingIcon = {
-                            Icon(
-                                Icons.Default.Lock,
-                                contentDescription = null,
-                                tint = Color(0xFFFF5555)
-                            )
-                        },
-                        visualTransformation = PasswordVisualTransformation(),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-
-                    TextButton(
-                        onClick = { navController.navigate(Screen.ForgotPassword.route) },
-                        modifier = Modifier.align(Alignment.End)
-                    ) {
-                        Text(
-                            "Forgot Password?",
-                            color = Color(0xFF1E90FF),
-                            fontSize = 12.sp
-                        )
-                    }
-
-                    Button(
-                        onClick = {
-                            if (email.isNotBlank() && password.isNotBlank()) {
-                                authViewModel.login(
-                                    context = context,  // Add this line
-                                    email = email,
-                                    password = password,
-                                    onSuccess = {
-                                        try {
-                                            // After successful login, you can get the stored values here too
-                                            val accessToken = authViewModel.getAccessToken(context)
-                                            val userId = authViewModel.getUserId(context)
-                                            Log.d("AuthScreen", "Login Success - AccessToken: $accessToken, UserId: $userId")
-
-                                            navController.navigate("home") {
-                                                popUpTo("auth") { inclusive = true }
-                                            }
-                                        } catch (e: Exception) {
-                                            Log.e("AuthScreen", "Navigation failed", e)
-                                            Toast.makeText(
-                                                context,
-                                                "Navigation failed: ${e.message}",
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                        }
-                                    },
-                                    onError = { errorMessage ->
-                                        Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+            // Login Button with gradient background
+            Button(
+                onClick = {
+                    if (email.isNotBlank() && password.isNotBlank()) {
+                        authViewModel.login(
+                            context = context,
+                            email = email,
+                            password = password,
+                            onSuccess = {
+                                try {
+                                    val accessToken = authViewModel.getAccessToken(context)
+                                    val userId = authViewModel.getUserId(context)
+                                    navController.navigate("home") {
+                                        popUpTo("auth") { inclusive = true }
                                     }
-                                )
-                            } else {
-                                Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
+                                } catch (e: Exception) {
+                                    Log.e("AuthScreen", "Navigation failed", e)
+                                    Toast.makeText(context, "Navigation failed: ${e.message}", Toast.LENGTH_LONG).show()
+                                }
+                            },
+                            onError = { errorMessage ->
+                                Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
                             }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp)
-                            .padding(top = 16.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5555)),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(
-                                color = Color.White,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        } else {
-                            Text(
-                                "Sign In",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
+                        )
+                    } else {
+                        Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(70.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent
+                ),
+                contentPadding = PaddingValues(12.dp),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(
+                                    Color(0xFFFF597B),
+                                    Color(0xFFFF8BA0)
+                                )
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    } else {
+                        Text(
+                            "Se connecter",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White
+                        )
                     }
                 }
             }
@@ -221,11 +238,22 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel = Auth
                 onClick = { navController.navigate(Screen.SignUp.route) },
                 modifier = Modifier.padding(top = 16.dp)
             ) {
-                Text(
-                    "Don't have an account? Sign Up",
-                    fontSize = 14.sp,
-                    color = Color(0xFF1E90FF)
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        "Pas encore de compte ? ",
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
+                    Text(
+                        "S'inscrire",
+                        fontSize = 14.sp,
+                        color = Color(0xFFFF597B),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }

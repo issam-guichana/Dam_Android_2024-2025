@@ -3,6 +3,7 @@ package com.example.gourmetia
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,18 +35,18 @@ fun ProfileScreen(
     val context = LocalContext.current
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showDeleteAccountDialog by remember { mutableStateOf(false)}
-        val isLoading by authViewModel.isLoading
+    val isLoading by authViewModel.isLoading
 
     // User data states
     var userName by remember { mutableStateOf("") }
     var userEmail by remember { mutableStateOf("") }
-    // Fetch user data on screen load
+
+    // Existing LaunchedEffect and dialog code remains the same
     LaunchedEffect(Unit) {
         val prefs = context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
         userName = prefs.getString("user_name", "") ?: ""
         userEmail = prefs.getString("user_email", "") ?: ""
 
-        // Fetch updated user data from server
         authViewModel.getUserById(
             context = context,
             onSuccess = { response ->
@@ -53,11 +54,12 @@ fun ProfileScreen(
                 userEmail = response.user.email
             },
             onError = { error ->
-                // Optionally handle error, perhaps show a toast
                 Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
             }
         )
     }
+
+    // Existing dialog code remains unchanged
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
@@ -78,7 +80,7 @@ fun ProfileScreen(
                             }
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5555))
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF597B))
                 ) {
                     Text("Logout")
                 }
@@ -97,7 +99,7 @@ fun ProfileScreen(
             title = {
                 Text(
                     "Delete Account",
-                    color = Color.Red,
+                    color = Color(0xFFFF597B),
                     fontWeight = FontWeight.Bold
                 )
             },
@@ -126,7 +128,7 @@ fun ProfileScreen(
                             }
                         )
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF597B))
                 ) {
                     Text("Delete Account", color = Color.White)
                 }
@@ -144,128 +146,121 @@ fun ProfileScreen(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            CircularProgressIndicator(color = Color(0xFFFF5555))
+            CircularProgressIndicator(color = Color(0xFFFF597B))
         }
     }
 
-    val gradientColors = listOf(
-        Color(0xFFFFFBF5),  // Warm white
-        Color(0xFFF5EDE0)   // Soft cream
-    )
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "Profile",
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF2C3E50)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFFF6A8B9),
+                        Color(0xFFFCE0E2)
                     )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(
-                            Icons.Outlined.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color(0xFF2C3E50)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
                 )
             )
-        }
-    ) { paddingValues ->
-        Box(
+    ) {
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(brush = Brush.verticalGradient(colors = gradientColors))
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
+            // Top App Bar
+            Row(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        // Profile Image
-                        Surface(
-                            modifier = Modifier
-                                .size(100.dp)
-                                .clip(CircleShape),
-                            color = Color(0xFFE1E8ED)
-                        ) {
-                            Icon(
-                                Icons.Outlined.Person,
-                                contentDescription = "Profile",
-                                modifier = Modifier
-                                    .padding(20.dp)
-                                    .size(60.dp),
-                                tint = Color(0xFFFF5555)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            text = userName,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF2C3E50)
-                        )
-
-                        Text(
-                            text = userEmail,
-                            fontSize = 14.sp,
-                            color = Color.Gray
-                        )
-                    }
+                IconButton(onClick = { navController.navigateUp() }) {
+                    Icon(
+                        Icons.Outlined.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color(0xFFFF597B)
+                    )
                 }
+                Text(
+                    "Profile",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFFF597B)
+                )
+                // Empty box for alignment
+                Box(modifier = Modifier.size(48.dp))
+            }
 
-                // Profile Options
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        ProfileOptionItem(
-                            icon = Icons.Outlined.Edit,
-                            text = "Edit Profile",
-                            onClick = { navController.navigate(Screen.EditProfile.route) }
-                        )
-                        ProfileOptionItem(
-                            icon = Icons.Outlined.Settings,
-                            text = "Account Settings",
-                            onClick = { /* TODO */ }
-                        )
-                        ProfileOptionItem(
-                            icon = Icons.Outlined.Delete,
-                            text = "Delete Account",
-                            textColor = Color.Red,
-                            onClick = { showDeleteAccountDialog = true }
-                        )
-                        ProfileOptionItem(
-                            icon = Icons.Outlined.Logout,
-                            text = "Logout",
-                            onClick = { showLogoutDialog = true }
-                        )
-                    }
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Profile Image and Info
+            Box(
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .background(Color.White)
+                    .border(
+                        width = 4.dp,
+                        color = Color(0xFFFF597B),
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Outlined.Person,
+                    contentDescription = "Profile",
+                    modifier = Modifier.size(60.dp),
+                    tint = Color(0xFFFF597B)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = userName,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFFF597B)
+            )
+
+            Text(
+                text = userEmail,
+                fontSize = 16.sp,
+                color = Color.Gray
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Profile Options Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    ProfileOptionItem(
+                        icon = Icons.Outlined.Edit,
+                        text = "Edit Profile",
+                        onClick = { navController.navigate(Screen.EditProfile.route) }
+                    )
+                    ProfileOptionItem(
+                        icon = Icons.Outlined.Settings,
+                        text = "Account Settings",
+                        onClick = { /* TODO */ }
+                    )
+                    ProfileOptionItem(
+                        icon = Icons.Outlined.Delete,
+                        text = "Delete Account",
+                        textColor = Color(0xFFFF597B),
+                        onClick = { showDeleteAccountDialog = true }
+                    )
+                    ProfileOptionItem(
+                        icon = Icons.Outlined.Logout,
+                        text = "Logout",
+                        onClick = { showLogoutDialog = true }
+                    )
                 }
             }
         }
@@ -295,7 +290,7 @@ fun ProfileOptionItem(
                 imageVector = icon,
                 contentDescription = text,
                 modifier = Modifier.size(24.dp),
-                tint = Color(0xFFFF5555)
+                tint = Color(0xFFFF597B)
             )
             Spacer(modifier = Modifier.width(16.dp))
             Text(
@@ -319,4 +314,3 @@ fun ProfileOptionItem(
 fun ProfileScreenPreview() {
     ProfileScreen(navController = rememberNavController())
 }
-

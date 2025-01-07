@@ -15,7 +15,7 @@ interface UserAPI {
     @POST("auth/signup")
     suspend fun signUp(@Body request: SignUpRequest): Response<SignUpResponse>
 
-    @POST("auth/forgot-password")
+    @POST("auth/generate-email")
     suspend fun generateEmail(@Body request: GenerateEmailRequest): Response<GenerateEmailResponse>
 
     @POST("auth/verify-otp/{userId}")
@@ -48,7 +48,7 @@ data class LoginResponse(
 )
 
 data class SignUpRequest(
-    val name: String,
+    val username: String,
     val email: String,
     val password: String,
     val confirmPassword: String

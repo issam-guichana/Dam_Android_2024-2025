@@ -2,10 +2,9 @@ package com.example.gourmetia
 
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -18,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -40,26 +38,33 @@ fun ForgotPasswordScreen(
     val context = LocalContext.current
     val isLoading = authViewModel.isLoading.value
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {},
-                navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color(0xFF1E90FF)
-                        )
-                    }
-                }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFFF6A8B9),  // Light pink
+                        Color(0xFFFCE0E2)   // Light pink
+                    )
+                )
+            )
+    ) {
+        // Top Bar
+        IconButton(
+            onClick = { navController.navigateUp() },
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back",
+                tint = Color(0xFFFF597B)
             )
         }
-    ) { paddingValues ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
                 .padding(horizontal = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
@@ -68,7 +73,7 @@ fun ForgotPasswordScreen(
             Icon(
                 imageVector = Icons.Default.Lock,
                 contentDescription = "Lock Icon",
-                tint = Color(0xFFFF5555),
+                tint = Color(0xFFFF597B),
                 modifier = Modifier
                     .size(80.dp)
                     .padding(bottom = 16.dp)
@@ -76,39 +81,48 @@ fun ForgotPasswordScreen(
 
             // Title
             Text(
-                text = "Forgot Password?",
-                fontSize = 24.sp,
+                text = "Mot de passe oublié ?",
+                fontSize = 30.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFFFF5555),
+                color = Color(0xFFE54D70),
                 textAlign = TextAlign.Center
             )
 
             // Description
             Text(
-                text = "Don't worry! It happens. Please enter the email address associated with your account.",
+                text = "Ne vous inquiétez pas ! Veuillez entrer l'adresse e-mail associée à votre compte.",
                 fontSize = 14.sp,
                 color = Color.Gray,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(vertical = 16.dp)
+                modifier = Modifier.padding(vertical = 24.dp)
             )
 
             // Email Input Field
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                placeholder = { Text("Email Address") },
+                label = { Text("Email") },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Email,
+                        contentDescription = null,
+                        tint = Color(0xFFFF597B)
+                    )
+                },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp),
+                    .padding(bottom = 32.dp),
                 singleLine = true,
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    focusedBorderColor = Color.LightGray,
-                    unfocusedBorderColor = Color.LightGray
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = Color(0xFFFF597B),
+                    focusedBorderColor = Color(0xFFFF597B),
+                    unfocusedLabelColor = Color(0xFFFF597B),
+                    focusedLabelColor = Color(0xFFFF597B)
                 ),
                 enabled = !isLoading
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             // Submit Button
             Button(
@@ -124,27 +138,45 @@ fun ForgotPasswordScreen(
                             }
                         )
                     } else {
-                        Toast.makeText(context, "Please enter your email", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Veuillez entrer votre email", Toast.LENGTH_SHORT).show()
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5555)),
+                    .height(70.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent
+                ),
+                contentPadding = PaddingValues(12.dp),
                 enabled = !isLoading
             ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = Color.White
-                    )
-                } else {
-                    Text(
-                        "Submit",
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        textAlign = TextAlign.Center
-                    )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(
+                                    Color(0xFFFF597B),
+                                    Color(0xFFFF8BA0)
+                                )
+                            ),
+                            shape = MaterialTheme.shapes.small
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    } else {
+                        Text(
+                            "Soumettre",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White
+                        )
+                    }
                 }
             }
         }
